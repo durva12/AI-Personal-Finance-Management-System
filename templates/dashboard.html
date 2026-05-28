@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — FinanceAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0f172a;
+      --surface: #1e293b;
+      --border:  rgba(255,255,255,0.08);
+      --text:    #e2e8f0;
+      --muted:   rgba(255,255,255,0.45);
+      --accent:  #6366f1;
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --yellow:  #f59e0b;
+      --blue:    #3b82f6;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Navbar ── */
+    .navbar {
+      background: rgba(15,23,42,0.97); border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 62px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(14px);
+    }
+    .nav-brand { font-size: 1.1rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-center { display: flex; align-items: center; gap: 4px; }
+    .nav-link {
+      padding: 6px 14px; border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+      text-decoration: none; color: rgba(255,255,255,0.55); transition: all .2s;
+      display: flex; align-items: center; gap: 6px; border: 1px solid transparent;
+    }
+    .nav-link:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .nav-link.active { color: #a5b4fc; background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-user { color: var(--muted); font-size: 0.83rem; }
+    .city-badge { background: rgba(6,182,212,0.12); color: #67e8f9; border: 1px solid rgba(6,182,212,0.25); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .btn-nav { padding: 6px 14px; border-radius: 8px; font-size: 0.83rem; font-weight: 600; text-decoration: none; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-nav-goal { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+    .btn-nav-goal:hover { background: rgba(99,102,241,0.25); }
+    .btn-nav-logout { background: rgba(255,255,255,0.07); color: var(--muted); border: 1px solid var(--border); }
+    .btn-nav-logout:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+    /* Hamburger for mobile */
+    .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; }
+    .nav-hamburger span { display: block; width: 22px; height: 2px; background: rgba(255,255,255,0.6); border-radius: 2px; transition: all .2s; }
+    .nav-mobile-menu {
+      display: none; position: fixed; top: 62px; left: 0; right: 0; z-index: 199;
+      background: rgba(15,23,42,0.98); border-bottom: 1px solid var(--border);
+      padding: 12px 20px 20px; flex-direction: column; gap: 6px;
+      backdrop-filter: blur(14px);
+    }
+    .nav-mobile-menu.open { display: flex; }
+    .nav-mobile-menu .nav-link { padding: 10px 14px; }
+    @media (max-width: 768px) {
+      .nav-center { display: none; }
+      .nav-hamburger { display: flex; }
+      .nav-right .nav-user, .nav-right .city-badge { display: none; }
+    }
+
+    /* ── Flash ── */
+    .flashes { max-width: 1200px; margin: 16px auto 0; padding: 0 24px; }
+    .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 0.875rem; }
+    .flash.success { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+    .flash.danger  { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+    .flash.info    { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+
+    /* ── Layout ── */
+    .main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 800; color: #f1f5f9; }
+    .page-header p  { color: var(--muted); font-size: 0.875rem; margin-top: 3px; }
+
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .card h2 { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Goal Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px; width: 100%; max-width: 540px;
+      padding: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .modal-sub { color: var(--muted); font-size: 0.83rem; margin-bottom: 20px; }
+    .goal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .goal-type-card {
+      background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; text-align: center;
+    }
+    .goal-type-card:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.08); }
+    .goal-type-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.15); }
+    .goal-type-card .icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .goal-type-card h4 { font-size: 0.85rem; font-weight: 600; color: #f1f5f9; }
+    .goal-type-card p  { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+    .modal-form { margin-bottom: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 500; margin-bottom: 5px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 10px 13px; border-radius: 9px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; font-size: 0.875rem; font-family: 'Inter', sans-serif; outline: none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group select option { background: #1e293b; }
+    .calc-box { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 9px; padding: 10px 14px; font-size: 0.83rem; color: #a5b4fc; margin-bottom: 14px; }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-skip { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all .2s; }
+    .btn-skip:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .btn-save-goal { flex: 2; padding: 11px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all .2s; }
+    .btn-save-goal:hover { background: #4f46e5; transform: translateY(-1px); }
+
+    /* ── Active Goal Card ── */
+    .active-goal-card {
+      background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 14px; padding: 14px 18px; min-width: 260px;
+      transition: border-color .2s;
+    }
+    .active-goal-card:hover { border-color: rgba(99,102,241,0.45); }
+    .goal-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .goal-card-badge { font-size: 0.72rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.06em; }
+    .goal-card-actions { display: flex; gap: 6px; }
+    .btn-goal-action {
+      padding: 4px 10px; border-radius: 7px; font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; transition: all .2s; border: 1px solid; font-family: 'Inter', sans-serif;
+    }
+    .btn-edit-goal { background: rgba(99,102,241,0.15); color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
+    .btn-edit-goal:hover { background: rgba(99,102,241,0.3); }
+    .btn-cancel-goal { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
+    .btn-cancel-goal:hover { background: rgba(239,68,68,0.22); }
+    .goal-card-name { font-size: 0.92rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .goal-card-detail { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
+
+    /* ── Edit Goal Modal ── */
+    .edit-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1001;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .edit-modal-overlay.hidden { display: none; }
+    .edit-modal {
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px; width: 100%; max-width: 460px; padding: 32px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5); animation: slideUp .22s ease;
+    }
+    .edit-modal h3 { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .edit-modal .sub { color: var(--muted); font-size: 0.82rem; margin-bottom: 20px; }
+    .edit-calc-box { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
+                     border-radius: 9px; padding: 9px 13px; font-size: 0.82rem; color: #a5b4fc;
+                     margin-bottom: 14px; }
+    .edit-modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-save-edit { flex: 2; padding: 11px; border-radius: 10px; border: none;
+                     background: var(--accent); color: #fff; font-family: 'Inter', sans-serif;
+                     font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all .2s; }
+    .btn-save-edit:hover { background: #4f46e5; transform: translateY(-1px); }
+    .btn-cancel-edit { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border);
+                       background: transparent; color: var(--muted);
+                       font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.875rem;
+                       cursor: pointer; transition: all .2s; }
+    .btn-cancel-edit:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+    /* ── Confirm Modal ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1002;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .confirm-overlay.hidden { display: none; }
+    .confirm-modal {
+      background: #1e293b; border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 18px; width: 100%; max-width: 380px; padding: 28px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5); text-align: center;
+      animation: slideUp .2s ease;
+    }
+    .confirm-modal .icon { font-size: 2.4rem; margin-bottom: 12px; }
+    .confirm-modal h4 { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+    .confirm-modal p  { font-size: 0.84rem; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .btn-confirm-cancel { flex: 1; padding: 10px; border-radius: 9px; border: none;
+                          background: rgba(239,68,68,0.15); color: #fca5a5; font-family: 'Inter', sans-serif;
+                          font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all .2s; }
+    .btn-confirm-cancel:hover { background: rgba(239,68,68,0.3); }
+    .btn-confirm-keep { flex: 1; padding: 10px; border-radius: 9px;
+                        border: 1px solid var(--border); background: transparent; color: var(--muted);
+                        font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.875rem;
+                        cursor: pointer; transition: all .2s; }
+    .btn-confirm-keep:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* ── Input section ── */
+    .input-card { margin-bottom: 24px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .expenses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .expense-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .expense-item label { font-size: 0.8rem; color: var(--muted); font-weight: 500; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+    .expense-item input { width: 100%; padding: 8px 11px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 0.9rem; font-family: 'Inter', sans-serif; outline: none; transition: border .2s; margin-top: 4px; }
+    .expense-item input:focus { border-color: var(--accent); }
+    .fixed-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.72rem; color: var(--muted); }
+    .fixed-toggle input[type=checkbox] { width: auto; accent-color: var(--accent); }
+    .fixed-toggle.active span { color: #a5b4fc; }
+    .expense-item.fixed-marked { border-color: rgba(99,102,241,0.35); background: rgba(99,102,241,0.07); }
+    .expense-item.fixed-marked label { color: #a5b4fc; }
+    .section-label { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
+    .income-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .income-field label { font-size: 0.82rem; color: rgba(255,255,255,0.6); font-weight: 500; display: block; margin-bottom: 6px; }
+    .income-field input, .income-field select {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: #fff; font-size: 0.9rem; font-family: 'Inter', sans-serif; outline: none;
+    }
+    .income-field input:focus, .income-field select:focus { border-color: var(--accent); }
+    .income-field select option { background: #1e293b; }
+    .actions { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-analyze { padding: 12px 28px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all .2s; }
+    .btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(99,102,241,0.35); }
+    .btn-demo { padding: 12px 22px; background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all .2s; }
+    .btn-demo:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+    /* ── Loading ── */
+    .loading-overlay { display: none; text-align: center; padding: 50px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid rgba(99,102,241,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results grid ── */
+    .results { display: none; }
+    .results-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .results-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+
+    /* ── Score card ── */
+    .score-ring { position: relative; width: 150px; height: 150px; margin: 0 auto 12px; }
+    #scoreValue { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: #fff; }
+    .score-meta { text-align: center; }
+    .score-meta .label { font-size: 1.1rem; font-weight: 700; }
+    .score-meta .hint  { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .score-improvement { display: inline-flex; align-items: center; gap: 4px; background: rgba(34,197,94,0.12); color: #86efac; border: 1px solid rgba(34,197,94,0.25); border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; font-weight: 600; margin-top: 8px; }
+
+    /* ── Budget table ── */
+    .budget-table { width: 100%; border-collapse: collapse; }
+    .budget-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .budget-table td { padding: 10px 12px; font-size: 0.86rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .budget-table tr:last-child td { border-bottom: none; }
+    .action-pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+    .pill-increase { background: rgba(34,197,94,0.12);  color: #86efac; }
+    .pill-decrease { background: rgba(239,68,68,0.12);  color: #fca5a5; }
+    .pill-maintain { background: rgba(255,255,255,0.07); color: var(--muted); }
+    .pill-fixed    { background: rgba(99,102,241,0.12);  color: #a5b4fc; }
+    .progress-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); margin-top: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
+
+    /* ── Insights ── */
+    .insight-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .insight-icon.up   { background: rgba(34,197,94,0.12); }
+    .insight-icon.down { background: rgba(239,68,68,0.12); }
+    .insight-msg { font-size: 0.875rem; color: var(--text); font-weight: 500; }
+    .insight-sub { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+    .insight-amt { margin-left: auto; font-weight: 700; font-size: 0.9rem; white-space: nowrap; padding-left: 12px; }
+
+    /* ── Cluster card ── */
+    .cluster-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px; }
+    .cluster-traits { list-style: none; margin: 10px 0; }
+    .cluster-traits li { font-size: 0.82rem; color: var(--muted); padding: 4px 0; display: flex; gap: 7px; align-items: flex-start; }
+    .cluster-traits li::before { content: "•"; flex-shrink: 0; }
+    .cluster-advice { margin-top: 12px; }
+    .cluster-advice h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 8px; }
+    .advice-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; display: flex; gap: 8px; }
+    .conf-bar { background: rgba(255,255,255,0.06); border-radius: 100px; height: 6px; margin-top: 12px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 100px; transition: width .8s ease; }
+
+    /* ── Goal progress ── */
+    .goal-card { border-left: 3px solid var(--accent); }
+    .goal-progress-ring { position: relative; width: 100px; height: 100px; margin: 12px auto; }
+    .goal-track-msg { text-align: center; font-size: 0.85rem; margin-top: 8px; }
+    .goal-tip-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+
+    /* ── Charts ── */
+    .chart-container { position: relative; }
+    canvas { max-width: 100%; }
+
+    /* ── Spending breakdown ── */
+    .breakdown-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .breakdown-item:last-child { border-bottom: none; }
+    .breakdown-cat { width: 130px; font-size: 0.83rem; font-weight: 500; color: var(--text); flex-shrink: 0; }
+    .breakdown-bar-wrap { flex: 1; }
+    .breakdown-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .breakdown-fill { height: 100%; border-radius: 3px; }
+    .breakdown-pct { width: 44px; text-align: right; font-size: 0.78rem; font-weight: 600; flex-shrink: 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-good    { color: var(--green); }
+    .status-warning { color: var(--yellow); }
+    .status-danger  { color: var(--red); }
+
+    /* ── Timeline ── */
+    .timeline-card { margin-bottom: 20px; }
+
+    /* ── Download button ── */
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.875rem;
+      cursor: pointer; transition: all .2s; text-decoration: none;
+    }
+    .btn-download:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(14,165,233,0.35); }
+    .btn-download:disabled { opacity: 0.6; cursor: wait; transform: none; }
+    .download-bar {
+      display: none; align-items: center; justify-content: space-between;
+      background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2);
+      border-radius: 12px; padding: 12px 20px; margin-bottom: 20px;
+    }
+    .download-bar .left { display: flex; align-items: center; gap: 10px; }
+    .download-bar .left p { font-size: 0.83rem; color: rgba(255,255,255,0.6); margin: 0; }
+    .download-bar .left strong { color: #7dd3fc; font-size: 0.9rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .results-grid-2, .results-grid-3 { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .income-row { grid-template-columns: 1fr; }
+      .goal-grid { grid-template-columns: 1fr 1fr; }
+      .actions { flex-direction: column; }
+      .btn-analyze, .btn-demo { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .goal-grid { grid-template-columns: 1fr; }
+      .main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Goal metadata — read by JS without triggering linter -->
+<div id="goalMeta" style="display:none"
+     data-id="{{ goal.id if goal else '' }}"
+     data-type="{{ goal.goal_type if goal else '' }}"></div>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <a href="{{ url_for('index') }}" class="nav-brand">💰 Finance<span>AI</span></a>
+
+  <!-- Desktop nav links -->
+  <div class="nav-center">
+    <a href="{{ url_for('index') }}"     class="nav-link">🏠 Home</a>
+    <a href="{{ url_for('dashboard') }}" class="nav-link active">📊 Dashboard</a>
+    {% if not goal %}
+      <button class="nav-link btn-nav-goal" style="cursor:pointer;background:none;border:none"
+              onclick="openGoalModal()">🎯 Set Goal</button>
+    {% else %}
+      <button class="nav-link" style="cursor:pointer;background:rgba(99,102,241,0.15);
+              color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)"
+              onclick="openEditGoalModal()">🎯 Edit Goal</button>
+    {% endif %}
+  </div>
+
+  <div class="nav-right">
+    {% if current_user.city and current_user.city != 'Other' %}
+      <span class="city-badge">📍 {{ current_user.city }}</span>
+    {% endif %}
+    <span class="nav-user">Hi, {{ current_user.name }}</span>
+    <a href="{{ url_for('logout') }}" class="btn-nav btn-nav-logout">↩ Logout</a>
+    <!-- Mobile hamburger -->
+    <div class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile dropdown -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('index') }}"     class="nav-link">🏠 Home</a>
+  <a href="{{ url_for('dashboard') }}" class="nav-link active">📊 Dashboard</a>
+  {% if not goal %}
+    <button class="nav-link" style="cursor:pointer;text-align:left;background:none;border:none;width:100%"
+            onclick="openGoalModal();toggleMobileMenu()">🎯 Set Goal</button>
+  {% else %}
+    <button class="nav-link" style="cursor:pointer;text-align:left;background:none;border:none;width:100%"
+            onclick="openEditGoalModal();toggleMobileMenu()">🎯 Edit Goal</button>
+  {% endif %}
+  <a href="{{ url_for('logout') }}" class="nav-link">↩ Logout</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flashes">
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ── GOAL MODAL ── -->
+<!-- FIX: Only show automatically on first login (no goal record). Never if skipped. -->
+<div id="goalModal" class="modal-overlay {% if not show_goal_modal %}hidden{% endif %}">
+  <div class="modal">
+    <h3>🎯 What is your financial goal?</h3>
+    <p class="modal-sub">Help us personalise your AI recommendations. You can skip and set it later.</p>
+
+    <div class="goal-grid">
+      <div class="goal-type-card selected" data-type="save_amount" data-label="Save a Fixed Amount" onclick="selectGoalType(this)">
+        <div class="icon">💰</div>
+        <h4>Save a Fixed Amount</h4>
+        <p>e.g. ₹1,00,000 in 12 months</p>
+      </div>
+      <div class="goal-type-card" data-type="emergency_fund" data-label="Build Emergency Fund" onclick="selectGoalType(this)">
+        <div class="icon">🛡️</div>
+        <h4>Emergency Fund</h4>
+        <p>3–6 months of expenses</p>
+      </div>
+      <div class="goal-type-card" data-type="pay_debt" data-label="Pay Off Debt" onclick="selectGoalType(this)">
+        <div class="icon">💳</div>
+        <h4>Pay Off Debt</h4>
+        <p>Clear loans or credit cards</p>
+      </div>
+      <div class="goal-type-card" data-type="big_purchase" data-label="Big Purchase" onclick="selectGoalType(this)">
+        <div class="icon">🏠</div>
+        <h4>Big Purchase</h4>
+        <p>Home, car, education, travel</p>
+      </div>
+    </div>
+
+    <div class="modal-form">
+      <div class="form-group">
+        <label>Goal Description</label>
+        <input type="text" id="goalLabel" placeholder="e.g. Save ₹1,00,000 in 1 year">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target Amount (₹)</label>
+          <input type="number" id="targetAmount" placeholder="100000" oninput="calcMonthly()">
+        </div>
+        <div class="form-group">
+          <label>Timeframe</label>
+          <select id="timeframe" onchange="calcMonthly()">
+            <option value="3">3 months</option>
+            <option value="6">6 months</option>
+            <option value="12" selected>1 year (12 months)</option>
+            <option value="24">2 years (24 months)</option>
+            <option value="36">3 years (36 months)</option>
+          </select>
+        </div>
+      </div>
+      <div id="calcBox" class="calc-box" style="display:none"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-skip" onclick="skipGoal()">Skip for now</button>
+      <button class="btn-save-goal" onclick="saveGoal()">✓ Set My Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT GOAL MODAL ── -->
+<div id="editGoalModal" class="edit-modal-overlay hidden">
+  <div class="edit-modal">
+    <h3>✏️ Edit Your Goal</h3>
+    <p class="sub">Update your financial goal details below.</p>
+
+    <div class="form-group">
+      <label>Goal Description</label>
+      <input type="text" id="editGoalLabel" placeholder="e.g. Save ₹1,00,000 in 1 year"
+             oninput="calcEditMonthly()">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group">
+        <label>Target Amount (₹)</label>
+        <input type="number" id="editTargetAmount" placeholder="100000" oninput="calcEditMonthly()">
+      </div>
+      <div class="form-group">
+        <label>Timeframe</label>
+        <select id="editTimeframe" onchange="calcEditMonthly()">
+          <option value="3">3 months</option>
+          <option value="6">6 months</option>
+          <option value="12" selected>1 year (12 months)</option>
+          <option value="24">2 years</option>
+          <option value="36">3 years</option>
+        </select>
+      </div>
+    </div>
+    <div id="editCalcBox" class="edit-calc-box" style="display:none"></div>
+    <div class="edit-modal-actions">
+      <button class="btn-cancel-edit" onclick="closeEditGoalModal()">Cancel</button>
+      <button class="btn-save-edit"   onclick="saveEditGoal()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CANCEL GOAL CONFIRM ── -->
+<div id="confirmCancelModal" class="confirm-overlay hidden">
+  <div class="confirm-modal">
+    <div class="icon">⚠️</div>
+    <h4>Cancel this goal?</h4>
+    <p>This will remove your active goal. Your past analyses are kept.
+       You can set a new goal anytime.</p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-keep"   onclick="closeConfirmModal()">Keep Goal</button>
+      <button class="btn-confirm-cancel" onclick="executeCancelGoal()">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="page-header">
+    <div>
+      <h1>Financial Dashboard</h1>
+      <p>Enter your monthly finances and get AI-powered recommendations</p>
+    </div>
+    {% if goal %}
+    <div class="active-goal-card" id="activeGoalCard">
+      <div class="goal-card-header">
+        <span class="goal-card-badge">🎯 Active Goal</span>
+        <div class="goal-card-actions">
+          <button class="btn-goal-action btn-edit-goal"   onclick="openEditGoalModal()"  title="Edit goal">✏️ Edit</button>
+          <button class="btn-goal-action btn-cancel-goal" onclick="confirmCancelGoal()"  title="Cancel goal">✕ Cancel</button>
+        </div>
+      </div>
+      <div class="goal-card-name" id="goalCardName">{{ goal.goal_label }}</div>
+      <div class="goal-card-detail" id="goalCardDetail">
+        ₹{{ '{:,.0f}'.format(goal.monthly_target) }}/mo for {{ goal.duration_months }} months
+        &nbsp;·&nbsp; Target: ₹{{ '{:,.0f}'.format(goal.target_amount) }}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Input Card -->
+  <div class="card input-card">
+    <h2>💵 Monthly Finances</h2>
+
+    <div class="income-row">
+      <div class="income-field">
+        <label>Monthly Income (₹)</label>
+        <input type="number" id="income" value="65000" placeholder="65000">
+      </div>
+      <div class="income-field">
+        <label>City</label>
+        <select id="city">
+          {% for c in cities %}
+            <option value="{{ c }}" {% if c == current_user.city %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">📋 Monthly Expenses — toggle 🔒 if the amount is fixed/unavoidable</div>
+    <div class="expenses-grid" id="expensesGrid">
+      {% set defaults = [('Housing',18000),('Food',9000),('Transport',5000),('Entertainment',7000),('Healthcare',2500),('Savings',8000),('Debt Repayment',7000),('Miscellaneous',4500)] %}
+      {% for cat, val in defaults %}
+      <div class="expense-item" id="wrap-{{ cat.replace(' ','-') }}">
+        <label>
+          {{ cat }}
+          <label class="fixed-toggle" onclick="toggleFixed('{{ cat }}')">
+            <input type="checkbox" id="fixed-{{ cat.replace(' ','-') }}" value="{{ cat }}" onchange="markFixed('{{ cat }}')"> 🔒
+            <span>Fixed</span>
+          </label>
+        </label>
+        <input type="number" id="exp-{{ cat }}" value="{{ val }}" placeholder="0">
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="actions">
+      <button class="btn-analyze" onclick="analyze()">🔮 Analyze with AI</button>
+      <button class="btn-demo"    onclick="loadDemo()">📊 Demo Data</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p style="color:var(--muted);font-size:0.9rem;">AI is crunching your numbers…</p>
+  </div>
+
+  <!-- ── RESULTS ── -->
+  <div id="results" class="results">
+
+    <!-- Download bar — shown after analysis -->
+    <div id="downloadBar" class="download-bar">
+      <div class="left">
+        <span style="font-size:1.4rem">📄</span>
+        <div>
+          <strong>Analysis Complete</strong>
+          <p>Download a full PDF report of your financial analysis</p>
+        </div>
+      </div>
+      <button class="btn-download" id="downloadBtn" onclick="downloadPDF()">
+        ⬇ Download PDF Report
+      </button>
+    </div>
+
+    <!-- Row 1: Score + Insights -->
+    <div class="results-grid-2">
+      <!-- Score -->
+      <div class="card">
+        <h2>🏆 Health Score</h2>
+        <div class="score-ring">
+          <canvas id="scoreChart"></canvas>
+          <div id="scoreValue">–</div>
+        </div>
+        <div class="score-meta">
+          <div class="label" id="scoreLabel">–</div>
+          <div class="hint">Based on savings, debt, housing & expenses</div>
+          <div id="scoreImprovement" class="score-improvement" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- AI Recommendations -->
+      <div class="card">
+        <h2>💡 AI Recommendations <span id="recCount" style="font-size:0.72rem;font-weight:500;
+            color:var(--muted);margin-left:6px"></span></h2>
+        <div id="insightsList"></div>
+        <div id="healthyList"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Budget + Spending Breakdown -->
+    <div class="results-grid-2">
+      <!-- Budget -->
+      <div class="card">
+        <h2>📊 Budget Allocation</h2>
+        <table class="budget-table">
+          <thead>
+            <tr><th>Category</th><th>Current</th><th>Recommended</th><th>Action</th></tr>
+          </thead>
+          <tbody id="budgetTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Spending Breakdown -->
+      <div class="card">
+        <h2>🍩 Spending Breakdown</h2>
+        <div class="chart-container" style="height:220px">
+          <canvas id="pieChart"></canvas>
+        </div>
+        <div id="breakdownList" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- Row 3: Cluster + Goal -->
+    <div class="results-grid-2">
+      <!-- Cluster -->
+      <div class="card" id="clusterCard">
+        <h2>🧬 Spending Profile</h2>
+        <div id="clusterContent"></div>
+      </div>
+
+      <!-- Goal Progress (hidden if no goal / skipped) -->
+      <div class="card goal-card" id="goalCard" style="display:none">
+        <h2>🎯 Goal Progress</h2>
+        <div id="goalContent"></div>
+      </div>
+    </div>
+
+    <!-- Row 4: Charts -->
+    <div class="results-grid-2">
+      <!-- Income vs Expenses bar -->
+      <div class="card">
+        <h2>📈 Income vs Expenses</h2>
+        <div class="chart-container" style="height:220px">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 12-Month Projection line -->
+      <div class="card timeline-card">
+        <h2>🔭 12-Month Score Projection</h2>
+        <div class="chart-container" style="height:220px">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+</main>
+
+<script>
+/* ──────────────────────────────────────────────────────────────────────────
+   FinanceAI Dashboard — Main JS
+   ────────────────────────────────────────────────────────────────────────── */
+
+const CATEGORIES = ["Housing","Food","Transport","Entertainment","Healthcare","Savings","Debt Repayment","Miscellaneous"];
+let pieChartInst = null, barChartInst = null, lineChartInst = null, scoreChartInst = null;
+let selectedGoalType = 'save_amount', selectedGoalLabel = 'Save a Fixed Amount';
+
+/* ── Goal Modal ──────────────────────────────────────────────────────────── */
+function openGoalModal()  { document.getElementById('goalModal').classList.remove('hidden'); }
+function closeGoalModal() { document.getElementById('goalModal').classList.add('hidden'); }
+
+function selectGoalType(el) {
+  document.querySelectorAll('.goal-type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGoalType  = el.dataset.type;
+  selectedGoalLabel = el.dataset.label;
+  document.getElementById('goalLabel').placeholder = 'e.g. ' + selectedGoalLabel;
+}
+
+function calcMonthly() {
+  const amt = parseFloat(document.getElementById('targetAmount').value) || 0;
+  const dur = parseInt(document.getElementById('timeframe').value) || 12;
+  const box = document.getElementById('calcBox');
+  if (amt > 0) {
+    const monthly = (amt / dur).toFixed(0);
+    box.textContent = `✅ Save ₹${Number(monthly).toLocaleString('en-IN')}/month for ${dur} months`;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+async function saveGoal() {
+  const label    = document.getElementById('goalLabel').value.trim() || selectedGoalLabel;
+  const target   = parseFloat(document.getElementById('targetAmount').value);
+  const duration = parseInt(document.getElementById('timeframe').value);
+  if (!target || target <= 0) { alert('Please enter a valid target amount.'); return; }
+  try {
+    const r = await fetch('/api/goal', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ goal_type: selectedGoalType, goal_label: label,
+                             target_amount: target, duration_months: duration, skipped: false })
+    });
+    const d = await r.json();
+    if (d.status === 'saved') {
+      closeGoalModal();
+      showToast(`🎯 Goal set: ${label} — ₹${Number(d.monthly_target).toLocaleString('en-IN')}/month`, 'success');
+    }
+  } catch(e) { alert('Error saving goal: ' + e.message); }
+}
+
+/* FIX: Skip records a "skipped" flag in DB so goal never shows again */
+async function skipGoal() {
+  try {
+    await fetch('/api/goal', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ skipped: true })
+    });
+  } catch(e) { /* ignore */ }
+  closeGoalModal();
+}
+
+/* ── Fixed Expense Toggles ───────────────────────────────────────────────── */
+function markFixed(cat) {
+  const wrap = document.getElementById('wrap-' + cat.replace(' ', '-'));
+  const cb   = document.getElementById('fixed-' + cat.replace(' ', '-'));
+  if (cb.checked) {
+    wrap.classList.add('fixed-marked');
+  } else {
+    wrap.classList.remove('fixed-marked');
+  }
+}
+function toggleFixed(cat) {
+  const cb = document.getElementById('fixed-' + cat.replace(' ', '-'));
+  cb.checked = !cb.checked;
+  markFixed(cat);
+}
+
+function getFixedCategories() {
+  return CATEGORIES.filter(cat => {
+    const cb = document.getElementById('fixed-' + cat.replace(' ', '-'));
+    return cb && cb.checked;
+  });
+}
+
+/* ── Demo Data ───────────────────────────────────────────────────────────── */
+async function loadDemo() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  try {
+    const r = await fetch('/api/demo');
+    const d = await r.json();
+    // Populate form
+    document.getElementById('income').value = d.income;
+    const expMap = {};
+    Object.entries(d.recommendations.budget).forEach(([cat, info]) => {
+      expMap[cat] = info.current;
+    });
+    CATEGORIES.forEach(cat => {
+      const el = document.getElementById('exp-' + cat);
+      if (el && expMap[cat] !== undefined) el.value = expMap[cat];
+    });
+    renderResults(d);
+  } catch(e) {
+    alert('Demo error: ' + e.message);
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+/* ── Main Analyze ────────────────────────────────────────────────────────── */
+async function analyze() {
+  const income = parseFloat(document.getElementById('income').value);
+  const city   = document.getElementById('city').value;
+  if (!income || income <= 0) { showToast('Please enter a valid income.', 'error'); return; }
+
+  const expenses = {};
+  CATEGORIES.forEach(cat => {
+    const el = document.getElementById('exp-' + cat);
+    expenses[cat] = parseFloat(el ? el.value : 0) || 0;
+  });
+  const fixed_categories = getFixedCategories();
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ income, city, expenses, fixed_categories })
+    });
+    const d = await r.json();
+    if (d.status === 'error') throw new Error(d.message);
+    renderResults(d);
+  } catch(e) {
+    showToast('Analysis error: ' + e.message, 'error');
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+/* ── Render Results ──────────────────────────────────────────────────────── */
+function renderResults(data) {
+  _lastAnalysisData = data;   // cache for PDF download
+
+  // Show download bar
+  const bar = document.getElementById('downloadBar');
+  if (bar) bar.style.display = 'flex';
+
+  const rec     = data.recommendations;   // new engine output
+  const cluster = data.cluster;
+  const fixed   = data.fixed_categories || [];
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  renderScore(rec);
+  renderBudgetTable(rec, fixed);
+  renderRecommendations(rec);
+  renderHealthy(rec);
+  renderPieChart(rec, data.income);
+  renderBarChart(rec, data.income);
+  renderLineChart(data.timeline);
+  renderCluster(cluster);
+  renderBreakdown(cluster.spending_breakdown);
+  renderGoal(data.goal_analysis);
+  renderSummaryBanner(rec);
+}
+
+/* ── Score ── */
+function renderScore(rec) {
+  const score = rec.health_score || 0;
+  const proj  = rec.projected_score || 0;
+  const label = rec.score_label || '–';
+  const color = rec.score_color || '#6366f1';
+  const emoji = rec.score_emoji || '';
+  const imp   = rec.score_improvement || 0;
+
+  document.getElementById('scoreValue').textContent = Math.round(score);
+  document.getElementById('scoreLabel').innerHTML =
+    `<span style="color:${color}">${emoji} ${label}</span>`;
+
+  const impEl = document.getElementById('scoreImprovement');
+  if (imp > 0) {
+    impEl.style.display = 'inline-flex';
+    impEl.textContent   = `↑ +${imp.toFixed(1)} pts with recommended budget`;
+  } else {
+    impEl.style.display = 'none';
+  }
+
+  if (scoreChartInst) scoreChartInst.destroy();
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  scoreChartInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [score, 100 - score],
+        backgroundColor: [color, 'rgba(255,255,255,0.06)'],
+        borderWidth: 0, cutout: '78%',
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+  });
+}
+
+/* ── Summary Banner ── */
+function renderSummaryBanner(rec) {
+  const existing = document.getElementById('summaryBanner');
+  if (existing) existing.remove();
+  if (!rec.summary) return;
+
+  const nRecs  = (rec.recommendations || []).length;
+  const impact = rec.total_potential_savings || 0;
+  const surplus = rec.monthly_surplus || 0;
+
+  const bgColor = nRecs === 0  ? 'rgba(34,197,94,0.1)'  :
+                  impact > 5000 ? 'rgba(239,68,68,0.1)' :
+                                  'rgba(99,102,241,0.1)';
+  const border  = nRecs === 0  ? 'rgba(34,197,94,0.25)'  :
+                  impact > 5000 ? 'rgba(239,68,68,0.25)' :
+                                  'rgba(99,102,241,0.25)';
+  const textCol = nRecs === 0  ? '#86efac' :
+                  impact > 5000 ? '#fca5a5' : '#a5b4fc';
+
+  const div = document.createElement('div');
+  div.id = 'summaryBanner';
+  div.style.cssText = `background:${bgColor};border:1px solid ${border};
+    border-radius:12px;padding:14px 18px;margin-bottom:20px;
+    font-size:0.875rem;color:${textCol};line-height:1.6;`;
+  div.innerHTML = `<strong>AI Summary:</strong> ${rec.summary}
+    ${impact > 0 ? `<span style="font-weight:700;margin-left:8px">
+      Potential monthly savings: ₹${impact.toLocaleString('en-IN')}</span>` : ''}`;
+
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.insertBefore(div, resultsDiv.firstChild);
+}
+
+/* ── Dynamic AI Recommendations ── */
+function renderRecommendations(rec) {
+  const el   = document.getElementById('insightsList');
+  const recs = rec.recommendations || [];
+  // Update header count badge
+  const countEl = document.getElementById('recCount');
+  if (countEl) {
+    if (recs.length === 0) {
+      countEl.innerHTML = `<span style="color:#86efac">✓ All healthy</span>`;
+    } else {
+      const hi = recs.filter(r=>r.priority==='High').length;
+      countEl.innerHTML = `${recs.length} action${recs.length>1?'s':''}`
+        + (hi ? ` <span style="color:#fca5a5;font-weight:700">(${hi} high)</span>` : '');
+    }
+  }
+
+  if (recs.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:20px 0">
+      <div style="font-size:2rem;margin-bottom:8px">🌟</div>
+      <div style="font-weight:700;color:#86efac;font-size:0.95rem;margin-bottom:6px">All Clear!</div>
+      <div style="color:var(--muted);font-size:0.82rem;line-height:1.5">
+        Every spending category is within healthy limits.<br>
+        Keep up the great work!
+      </div>
+    </div>`;
+    return;
+  }
+
+  const priorityColors = {
+    High:   { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.25)',   text: '#fca5a5',  icon: '🔴' },
+    Medium: { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)',  text: '#fcd34d',  icon: '🟡' },
+    Low:    { bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.25)', text: '#a5b4fc',  icon: '🔵' },
+  };
+
+  el.innerHTML = recs.map(r => {
+    const p       = priorityColors[r.priority] || priorityColors.Low;
+    const isUp    = r.action === 'increase';
+    const iconCls = isUp ? 'up' : 'down';
+    const arrow   = isUp ? '↑' : '↓';
+    const amtCol  = isUp ? 'var(--green)' : 'var(--red)';
+    const trendHtml = r.trend_flag && r.trend_flag !== 'stable' && r.trend_flag !== ''
+      ? `<div style="font-size:0.72rem;color:${r.trend_flag==='spike'?'#fca5a5':'#fcd34d'};
+           margin-top:4px;display:flex;align-items:center;gap:4px">
+           <span>${r.trend_flag==='spike'?'⚡':'📈'}</span>
+           <span>${r.trend_detail}</span>
+         </div>` : '';
+
+    return `
+    <div class="insight-item" style="align-items:flex-start;padding:14px 0;cursor:pointer"
+         onclick="toggleRecDetail(this)">
+      <div class="insight-icon ${iconCls}"
+           style="font-size:1rem;background:${p.bg};border:1px solid ${p.border}">${arrow}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="insight-msg">${r.icon} ${r.category}</span>
+          <span style="font-size:0.7rem;background:${p.bg};color:${p.text};
+                border:1px solid ${p.border};padding:1px 7px;border-radius:10px;
+                font-weight:700">${p.icon} ${r.priority}</span>
+          ${r.is_fixed ? `<span style="font-size:0.7rem;background:rgba(99,102,241,0.12);
+                color:#a5b4fc;padding:1px 7px;border-radius:10px;font-weight:700">🔒 Fixed</span>` : ''}
+        </div>
+        <div class="insight-sub">${r.reason}</div>
+        ${trendHtml}
+        <!-- Expandable detail -->
+        <div class="rec-detail" style="display:none;margin-top:10px;
+             background:rgba(255,255,255,0.03);border-radius:8px;padding:12px">
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:8px">
+            ${r.detail}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+               font-size:0.78rem;color:var(--muted);margin-bottom:10px">
+            <div>📊 Current<br><strong style="color:var(--text)">
+              ₹${r.current.toLocaleString('en-IN')} (${r.current_pct}%)</strong></div>
+            <div>🎯 Target<br><strong style="color:${amtCol}">
+              ₹${r.recommended.toLocaleString('en-IN')} (${r.recommended_pct}%)</strong></div>
+            <div>💡 Monthly impact<br><strong style="color:#86efac">
+              ₹${r.monthly_impact.toLocaleString('en-IN')}</strong></div>
+          </div>
+          ${r.tips && r.tips.length ? `
+          <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;
+               color:var(--muted);margin-bottom:6px">Quick tips</div>
+          ${r.tips.map(t => `<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);
+               padding:3px 0;display:flex;gap:6px"><span>→</span><span>${t}</span></div>`).join('')}
+          ` : ''}
+        </div>
+      </div>
+      <div class="insight-amt" style="color:${amtCol}">
+        ₹${r.difference.toLocaleString('en-IN')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleRecDetail(el) {
+  const detail = el.querySelector('.rec-detail');
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+}
+
+/* ── Healthy Categories (shown below recommendations) ── */
+function renderHealthy(rec) {
+  let healthyEl = document.getElementById('healthyList');
+  if (!healthyEl) return;
+  const healthy = rec.healthy || [];
+  if (healthy.length === 0) { healthyEl.innerHTML = ''; return; }
+
+  healthyEl.innerHTML = `
+    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;
+         color:var(--muted);margin-top:16px;margin-bottom:10px">✅ Healthy categories</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${healthy.filter(h => h.status !== 'fixed').map(h => `
+        <div title="${h.message}" style="background:rgba(34,197,94,0.08);
+             border:1px solid rgba(34,197,94,0.2);border-radius:8px;
+             padding:5px 12px;font-size:0.78rem;color:#86efac;
+             display:flex;align-items:center;gap:5px;cursor:help">
+          <span>${h.icon}</span>
+          <span>${h.category}</span>
+          <span style="color:rgba(255,255,255,0.35)">${h.current_pct}%</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ── Budget Table ── */
+function renderBudgetTable(rec, fixed) {
+  const tbody = document.getElementById('budgetTable');
+  tbody.innerHTML = '';
+  const recs = rec.recommendations || [];
+  const recMap = {};
+  recs.forEach(r => { recMap[r.category] = r; });
+
+  CATEGORIES.forEach(cat => {
+    const info = rec.budget[cat];
+    if (!info) return;
+    const isFixed  = fixed.includes(cat) || info.is_fixed;
+    const recItem  = recMap[cat];
+    const action   = isFixed ? 'fixed' : (info.action || 'maintain');
+    const pillMap  = { increase:'pill-increase', decrease:'pill-decrease',
+                       maintain:'pill-maintain', fixed:'pill-fixed' };
+    const pillCls  = pillMap[action] || 'pill-maintain';
+    const pillLbl  = isFixed ? '🔒 Fixed'
+                     : ({ increase:'↑ Increase', decrease:'↓ Reduce', maintain:'✓ OK' }[action] || '–');
+    const pct      = Math.min(100, info.recommended_pct || 0);
+    const fillColor = action === 'increase' ? '#22c55e'
+                    : (action === 'decrease' ? '#ef4444' : '#6366f1');
+    const priorityBadge = recItem
+      ? `<span style="font-size:0.65rem;margin-left:6px;color:${
+           recItem.priority==='High'?'#fca5a5':recItem.priority==='Medium'?'#fcd34d':'#a5b4fc'
+         }">${recItem.priority}</span>`
+      : '';
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${cat}</strong>${priorityBadge}</td>
+        <td>₹${info.current.toLocaleString('en-IN')}</td>
+        <td>₹${info.recommended.toLocaleString('en-IN')}
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${fillColor}30"></div>
+          </div>
+        </td>
+        <td><span class="action-pill ${pillCls}">${pillLbl}</span></td>
+      </tr>`;
+  });
+}
+
+/* ── Pie Chart ── */
+function renderPieChart(rec, income) {
+  const labels = [], vals = [];
+  const colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#3b82f6','#a855f7','#06b6d4','#84cc16'];
+  CATEGORIES.forEach((cat, i) => {
+    const info = rec.budget[cat];
+    if (info) { labels.push(cat); vals.push(info.current); }
+  });
+  if (pieChartInst) pieChartInst.destroy();
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  pieChartInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: vals, backgroundColor: colors,
+                                  borderWidth: 2, borderColor: '#1e293b' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right',
+                  labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } },
+        tooltip: { callbacks: { label: ctx => ` ₹${ctx.raw.toLocaleString('en-IN')}` } }
+      }
+    }
+  });
+}
+
+/* ── Bar Chart ── */
+function renderBarChart(rec, income) {
+  const cats = CATEGORIES;
+  const current     = cats.map(c => rec.budget[c]?.current || 0);
+  const recommended = cats.map(c => rec.budget[c]?.recommended || 0);
+  if (barChartInst) barChartInst.destroy();
+  const ctx = document.getElementById('barChart').getContext('2d');
+  barChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: cats.map(c => c.length > 9 ? c.slice(0,9)+'…' : c),
+      datasets: [
+        { label: 'Current',     data: current,     backgroundColor: 'rgba(99,102,241,0.7)',  borderRadius: 4 },
+        { label: 'Recommended', data: recommended, backgroundColor: 'rgba(34,197,94,0.7)',  borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ₹${ctx.raw.toLocaleString('en-IN')}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 },
+                      callback: v => '₹'+(v>=1000?(v/1000).toFixed(0)+'k':v) },
+             grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+/* ── Line Chart ── */
+function renderLineChart(timeline) {
+  if (!timeline || !timeline.length) return;
+  const months = timeline.map(t => 'M' + t.month);
+  const scores = timeline.map(t => t.score);
+  if (lineChartInst) lineChartInst.destroy();
+  const ctx = document.getElementById('lineChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(99,102,241,0.3)');
+  grad.addColorStop(1, 'rgba(99,102,241,0)');
+  lineChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Health Score', data: scores,
+        borderColor: '#6366f1', backgroundColor: grad, borderWidth: 2,
+        pointBackgroundColor: '#6366f1', pointRadius: 4, fill: true, tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { min:0, max:100, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} }
+      }
+    }
+  });
+}
+
+/* ── Cluster ── */
+function renderCluster(cluster) {
+  const el = document.getElementById('clusterContent');
+  const conf = cluster.primary_confidence || 0;
+  el.innerHTML = `
+    <div class="cluster-badge" style="background:${cluster.badge_color};color:${cluster.text_color}">
+      ${cluster.emoji} ${cluster.label}
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);line-height:1.5;margin-bottom:10px">${cluster.description}</p>
+    <ul class="cluster-traits">
+      ${(cluster.traits||[]).map(t=>`<li>${t}</li>`).join('')}
+    </ul>
+    <div style="font-size:0.75rem;color:var(--muted);margin-top:10px">Confidence</div>
+    <div class="conf-bar"><div class="conf-fill" style="width:${conf}%;background:${cluster.color}"></div></div>
+    <div style="font-size:0.75rem;color:${cluster.color};margin-top:4px;font-weight:600">${conf}% match</div>
+    <div class="cluster-advice">
+      <h4>💡 Advice for you</h4>
+      ${(cluster.advice||[]).map(a=>`<div class="advice-item">→ ${a}</div>`).join('')}
+    </div>`;
+}
+
+/* ── Spending Breakdown ── */
+function renderBreakdown(breakdown) {
+  const el = document.getElementById('breakdownList');
+  if (!breakdown) return;
+  const colorMap = { good:'#22c55e', warning:'#f59e0b', danger:'#ef4444' };
+  el.innerHTML = breakdown.map(item => {
+    const pct = Math.min(item.ratio, 100);
+    const col = colorMap[item.status] || '#6366f1';
+    return `
+      <div class="breakdown-item">
+        <div class="dot" style="background:${col}"></div>
+        <div class="breakdown-cat">${item.category}</div>
+        <div class="breakdown-bar-wrap">
+          <div class="breakdown-bar">
+            <div class="breakdown-fill" style="width:${pct}%;background:${col}80"></div>
+          </div>
+        </div>
+        <div class="breakdown-pct status-${item.status}">${item.ratio}%</div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Goal ── */
+function renderGoal(goalAnalysis) {
+  const card = document.getElementById('goalCard');
+  if (!goalAnalysis) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const pct = goalAnalysis.progress_pct || 0;
+  const trackColor = goalAnalysis.on_track ? '#22c55e' : '#f59e0b';
+  document.getElementById('goalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:1.8rem;font-weight:800;color:${trackColor}">${pct}%</div>
+      <div style="font-size:0.8rem;color:var(--muted)">toward ${goalAnalysis.goal_label}</div>
+      <div style="width:100%;background:rgba(255,255,255,0.07);border-radius:4px;
+           height:6px;margin:10px 0;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${trackColor};
+             border-radius:4px;transition:width .8s"></div>
+      </div>
+    </div>
+    <p style="font-size:0.83rem;color:${trackColor};font-weight:600;text-align:center;margin-bottom:12px">
+      ${goalAnalysis.gap_message}
+    </p>
+    <div style="font-size:0.78rem;color:var(--muted);display:grid;
+         grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div>🎯 Target: <strong style="color:var(--text)">₹${Number(goalAnalysis.target_amount).toLocaleString('en-IN')}</strong></div>
+      <div>📅 Monthly: <strong style="color:var(--text)">₹${Number(goalAnalysis.monthly_target).toLocaleString('en-IN')}</strong></div>
+      <div>💰 Savings: <strong style="color:var(--text)">₹${Number(goalAnalysis.current_savings).toLocaleString('en-IN')}</strong></div>
+      <div>⏳ Months left: <strong style="color:var(--text)">${goalAnalysis.months_remaining}</strong></div>
+    </div>
+    ${goalAnalysis.tips.length ? `
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Quick wins</div>
+      ${goalAnalysis.tips.map(t=>`<div class="goal-tip-item">→ ${t.message}</div>`).join('')}
+    ` : ''}`;
+}
+
+/* ── Download PDF ── */
+let _lastAnalysisData = null;   // cache full response for PDF
+
+async function downloadPDF() {
+  if (!_lastAnalysisData) { showToast('Run an analysis first.', 'error'); return; }
+  const btn = document.getElementById('downloadBtn');
+  btn.disabled   = true;
+  btn.textContent = '⏳ Generating PDF…';
+
+  try {
+    const payload = {
+      income:          _lastAnalysisData.income,
+      city:            _lastAnalysisData.city,
+      recommendations: _lastAnalysisData.recommendations,
+      cluster:         _lastAnalysisData.cluster,
+      timeline:        _lastAnalysisData.timeline,
+      goal_analysis:   _lastAnalysisData.goal_analysis || null,
+    };
+
+    const r = await fetch('/api/download_report', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify(payload),
+    });
+
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({error: 'Unknown error'}));
+      throw new Error(err.error || r.statusText);
+    }
+
+    // Stream blob → auto-download
+    const blob     = await r.blob();
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    a.href         = url;
+    a.download     = `FinanceAI_Report.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('PDF downloaded successfully!', 'success');
+  } catch(e) {
+    showToast('PDF error: ' + e.message, 'error');
+  } finally {
+    btn.disabled   = false;
+    btn.textContent = '⬇ Download PDF Report';
+  }
+}
+
+/* ── Toast ── */
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  const color = type === 'success' ? '#86efac' : (type === 'error' ? '#fca5a5' : '#a5b4fc');
+  const bg    = type === 'success' ? 'rgba(34,197,94,0.15)' : (type === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.15)');
+  t.style.cssText = `position:fixed;top:80px;right:20px;z-index:9999;
+    background:${bg};color:${color};border:1px solid ${color}40;
+    padding:12px 18px;border-radius:10px;font-size:0.875rem;font-weight:600;
+    max-width:340px;box-shadow:0 8px 20px rgba(0,0,0,0.3);
+    animation:slideIn .25s ease;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+/* ── Mobile Menu ── */
+function toggleMobileMenu() {
+  const m = document.getElementById('mobileMenu');
+  m.classList.toggle('open');
+}
+// Close mobile menu on outside click
+document.addEventListener('click', e => {
+  const menu = document.getElementById('mobileMenu');
+  const ham  = document.querySelector('.nav-hamburger');
+  if (menu && ham && !menu.contains(e.target) && !ham.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+/* ── Current goal state — read from hidden data element (avoids JS linter errors) ── */
+const _goalMeta      = document.getElementById('goalMeta');
+let _currentGoalId   = _goalMeta ? (parseInt(_goalMeta.dataset.id)   || null) : null;
+let _currentGoalType = _goalMeta ? (_goalMeta.dataset.type || '')            : '';
+
+/* ── Edit Goal Modal ── */
+function openEditGoalModal() {
+  // Pre-fill from current goal card text or fetch from API
+  fetch('/api/goal/current')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.goal) { showToast('No active goal found.', 'error'); return; }
+      const g = d.goal;
+      _currentGoalId   = g.id;
+      _currentGoalType = g.goal_type;
+      document.getElementById('editGoalLabel').value    = g.goal_label;
+      document.getElementById('editTargetAmount').value = g.target_amount;
+      // Set closest timeframe option
+      const sel = document.getElementById('editTimeframe');
+      const opts = Array.from(sel.options).map(o => parseInt(o.value));
+      const closest = opts.reduce((a, b) =>
+        Math.abs(b - g.duration_months) < Math.abs(a - g.duration_months) ? b : a
+      );
+      // Add exact value if not present
+      const hasExact = opts.includes(g.duration_months);
+      if (!hasExact) {
+        const opt = document.createElement('option');
+        opt.value = g.duration_months;
+        opt.textContent = `${g.duration_months} months`;
+        sel.insertBefore(opt, sel.firstChild);
+      }
+      sel.value = g.duration_months;
+      calcEditMonthly();
+      document.getElementById('editGoalModal').classList.remove('hidden');
+    })
+    .catch(() => showToast('Could not load goal data.', 'error'));
+}
+
+function closeEditGoalModal() {
+  document.getElementById('editGoalModal').classList.add('hidden');
+}
+
+function calcEditMonthly() {
+  const amt = parseFloat(document.getElementById('editTargetAmount').value) || 0;
+  const dur = parseInt(document.getElementById('editTimeframe').value) || 12;
+  const box = document.getElementById('editCalcBox');
+  if (amt > 0) {
+    const monthly = Math.round(amt / dur);
+    box.textContent = `✅ New monthly target: ₹${monthly.toLocaleString('en-IN')}/month for ${dur} months`;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+async function saveEditGoal() {
+  const label    = document.getElementById('editGoalLabel').value.trim();
+  const target   = parseFloat(document.getElementById('editTargetAmount').value);
+  const duration = parseInt(document.getElementById('editTimeframe').value);
+
+  if (!label)              { showToast('Goal name cannot be empty.', 'error');         return; }
+  if (!target || target <= 0){ showToast('Enter a valid target amount.', 'error');     return; }
+  if (!duration || duration < 1){ showToast('Select a valid timeframe.', 'error');     return; }
+  if (!_currentGoalId)     { showToast('No active goal to edit.', 'error');            return; }
+
+  const btn = document.querySelector('.btn-save-edit');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const r = await fetch(`/api/goal/edit/${_currentGoalId}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        goal_label: label, target_amount: target,
+        duration_months: duration, goal_type: _currentGoalType
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Update failed');
+
+    // Update the goal card in the DOM without page reload
+    const cardName   = document.getElementById('goalCardName');
+    const cardDetail = document.getElementById('goalCardDetail');
+    if (cardName)   cardName.textContent   = d.goal_label;
+    if (cardDetail) cardDetail.textContent =
+      `₹${Math.round(d.monthly_target).toLocaleString('en-IN')}/mo for ${d.duration_months} months · Target: ₹${d.target_amount.toLocaleString('en-IN')}`;
+
+    closeEditGoalModal();
+    showToast(`✅ Goal updated: ${d.goal_label}`, 'success');
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Save Changes';
+  }
+}
+
+/* ── Cancel Goal ── */
+function confirmCancelGoal() {
+  document.getElementById('confirmCancelModal').classList.remove('hidden');
+}
+function closeConfirmModal() {
+  document.getElementById('confirmCancelModal').classList.add('hidden');
+}
+
+async function executeCancelGoal() {
+  if (!_currentGoalId) { showToast('No active goal.', 'error'); return; }
+  const btn = document.querySelector('.btn-confirm-cancel');
+  btn.disabled = true; btn.textContent = 'Cancelling…';
+
+  try {
+    const r = await fetch(`/api/goal/cancel/${_currentGoalId}`, { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Cancel failed');
+
+    // Hide goal card and update navbar edit button
+    const card = document.getElementById('activeGoalCard');
+    if (card) card.style.display = 'none';
+
+    // Swap "Edit Goal" in nav to "Set Goal"
+    document.querySelectorAll('.nav-link').forEach(el => {
+      if (el.textContent.includes('Edit Goal')) {
+        el.textContent = '🎯 Set Goal';
+        el.onclick = openGoalModal;
+      }
+    });
+
+    closeConfirmModal();
+    _currentGoalId = null;
+    showToast('Goal cancelled. You can set a new goal anytime.', 'success');
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Yes, Cancel';
+  }
+}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Check if goal is already set (to show/hide the set-goal button)
+  fetch('/api/goal/current')
+    .then(r => r.json())
+    .then(d => {
+      const btn = document.querySelector('.btn-nav-goal');
+      if (btn && d.goal) btn.style.display = 'none';
+    }).catch(() => {});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page == 'signup' %}Sign Up{% else %}Login{% endif %} — FinanceAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .auth-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      width: 100%; max-width: 460px;
+      padding: 40px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo-icon { font-size: 2.5rem; }
+    .logo h1 { color: #fff; font-size: 1.5rem; font-weight: 700; margin-top: 8px; }
+    .logo p { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 4px; }
+    .tabs { display: flex; background: rgba(255,255,255,0.07); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+    .tab {
+      flex: 1; text-align: center; padding: 10px; border-radius: 8px;
+      color: rgba(255,255,255,0.5); font-weight: 600; font-size: 0.9rem;
+      text-decoration: none; transition: all .2s;
+    }
+    .tab.active { background: #6366f1; color: #fff; }
+    .tab:hover:not(.active) { color: rgba(255,255,255,0.8); }
+    .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
+    .flash.danger  { background: rgba(239,68,68,0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .flash.success { background: rgba(34,197,94,0.15);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+    .flash.info    { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+    label { display: block; color: rgba(255,255,255,0.7); font-size: 0.82rem; font-weight: 500; margin-bottom: 6px; }
+    input, select {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; font-size: 0.9rem; outline: none; transition: border .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    input::placeholder { color: rgba(255,255,255,0.3); }
+    input:focus, select:focus { border-color: #6366f1; background: rgba(99,102,241,0.1); }
+    select option { background: #1e1b4b; color: #fff; }
+    .field { margin-bottom: 18px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .remember { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+    .remember input[type=checkbox] { width: auto; accent-color: #6366f1; }
+    .remember label { margin: 0; color: rgba(255,255,255,0.6); font-size: 0.85rem; }
+    .btn {
+      width: 100%; padding: 13px; border-radius: 10px; border: none;
+      font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
+    .divider { text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin: 18px 0; }
+    .back-home { display: block; text-align: center; margin-top: 16px; color: rgba(255,255,255,0.4); font-size: 0.82rem; text-decoration: none; }
+    .back-home:hover { color: rgba(255,255,255,0.7); }
+    .password-note { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="auth-card">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <h1>FinanceAI</h1>
+    <p>AI-powered personal finance advisor</p>
+  </div>
+
+  <div class="tabs">
+    <a href="{{ url_for('login') }}"   class="tab {% if page == 'login'  %}active{% endif %}">Login</a>
+    <a href="{{ url_for('signup') }}"  class="tab {% if page == 'signup' %}active{% endif %}">Sign Up</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- ── LOGIN ── -->
+  {% if page == 'login' %}
+  <form method="POST" action="{{ url_for('login') }}">
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Your password" required autocomplete="current-password">
+    </div>
+    <div class="remember">
+      <input type="checkbox" name="remember" id="remember">
+      <label for="remember">Remember me</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Login →</button>
+  </form>
+  <div class="divider">— or —</div>
+  <a href="{{ url_for('admin_login') }}" class="back-home">🔒 Admin Login</a>
+
+  <!-- ── SIGNUP ── -->
+  {% else %}
+  <form method="POST" action="{{ url_for('signup') }}">
+    <div class="row">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="Ravi Kumar" required>
+      </div>
+      <div class="field">
+        <label>City</label>
+        <select name="city">
+          {% for c in cities %}
+            <option value="{{ c }}" {% if c == 'Pune' %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Min 6 chars" required autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password" placeholder="Repeat" required>
+      </div>
+    </div>
+    <p class="password-note">Minimum 6 characters</p>
+    <br>
+    <button type="submit" class="btn btn-primary">Create Account →</button>
+  </form>
+  {% endif %}
+
+  <a href="{{ url_for('index') }}" class="back-home">← Back to Home</a>
+</div>
+
+</body>
+</html>
